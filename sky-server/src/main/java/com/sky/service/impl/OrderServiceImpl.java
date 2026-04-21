@@ -21,6 +21,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
+    @Autowired
+    private WebSocketServer webSocketServer;
     @Autowired
     private UserMapper userMapper;
    @Autowired
@@ -130,7 +133,17 @@ public class OrderServiceImpl implements OrderService {
             return vo;
         } catch (RuntimeException e) {
             if (e.getMessage().contains("微信支付") || e.getMessage().contains("证书") || e.getMessage().contains("配置")) {
-                throw new OrderBusinessException("微信支付功能暂未配置，无法完成支付");
+                //模拟成功
+                paySuccess(ordersPaymentDTO.getOrderNumber());
+
+                OrderPaymentVO vo = new OrderPaymentVO();
+                vo.setPackageStr("prepay_id=mock_prepay_id");
+                vo.setTimeStamp(String.valueOf(System.currentTimeMillis() / 1000));
+                vo.setNonceStr("mock_nonce_str");
+                vo.setPaySign("mock_pay_sign");
+                vo.setSignType("RSA");
+                return vo;
+               // throw new OrderBusinessException("微信支付功能暂未配置，无法完成支付");
             }
             throw e;
         }
@@ -178,6 +191,13 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        Map map = new HashMap();
+        map.put("type", 1);
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号:" + outTradeNo );
+        String message = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(message );
     }
     /**
      * 用户端订单分页查询

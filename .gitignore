@@ -1,7 +1,17 @@
+# Maven
 **/target/
+*.class
+
+# IDE
 .idea
 *.iml
-*.class
+
+# Test files
 *Test.java
 **/test/
-**/application-*.yml    # <-- 就加这一行！
+
+# Application configurations (ignore all profile configs)
+**/application-dev.yml
+**/application-prod.yml
+**/application*.yml
+!application.yml
