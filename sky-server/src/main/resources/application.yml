@@ -34,6 +34,10 @@ logging:
         controller: info
 
 sky:
+  shop:
+    address: 辽宁石油化工大学
+  baidu :
+      ak: ${sky.baidu.ak}
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
@@ -52,5 +56,12 @@ sky:
     access-key-secret: ${sky.alioss.access-key-secret}
     bucket-name: ${sky.alioss.bucket-name}
   wechat:
-    app-id: ${sky.wechat.app-id}
+    appid: ${sky.wechat.app-id}
     secret: ${sky.wechat.app-secret}
+    mchid: your_mchid
+    mchSerialNo: your_mch_serial_no
+    privateKeyFilePath: D:/path/to/apiclient_key.pem
+    apiV3Key: your_api_v3_key
+    weChatPayCertFilePath: D:/path/to/wechatpay_cert.pem
+    notifyUrl: https://your-domain.com/notify
+    refundNotifyUrl: https://your-domain.com/refund-notify
