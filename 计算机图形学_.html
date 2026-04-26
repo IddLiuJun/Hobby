@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>计算机图形学鸟类栖息仿真2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; font-family: Arial; background: #000; }
+        
+        /* 增强控制面板 - 新增过渡动画 */
+        #panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 100;
+            min-width: 220px;
+            border: 1px solid #4CAF50;
+            /* 新增：过渡动画 */
+            transition: all 0.3s ease;
+        }
+        /* 新增：控制面板隐藏状态 */
+        #panel.hidden {
+            left: -250px; /* 向左滑出视野 */
+        }
+        #panel h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #4CAF50;
+            text-align: center;
+        }
+        #panel button {
+            margin: 5px 0;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        #panel button:hover {
+            background: #45a049;
+            transform: scale(1.02);
+        }
+        /* 新增：隐藏/显示按钮样式 */
+        #panel .toggle-btn {
+            background: #9C27B0;
+            font-size: 12px;
+            padding: 4px;
+            margin-top: 10px;
+        }
+        #panel .env-btn {
+            background: #2196F3;
+        }
+        #panel .env-btn:hover {
+            background: #0b7dda;
+        }
+        #panel .bird-btn {
+            background: #ff9800;
+        }
+        #panel .bird-btn:hover {
+            background: #e68900;
+        }
+        #panel span {
+            display: block;
+            margin: 8px 0 4px;
+        }
+        #panel input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        /* 操作提示（增强）- 新增过渡动画 */
+        #tips {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 320px;
+            border: 1px solid #2196F3;
+            /* 新增：过渡动画 */
+            transition: all 0.3s ease;
+        }
+        /* 新增：操作提示隐藏状态 */
+        #tips.hidden {
+            right: -350px; /* 向右滑出视野 */
+        }
+        /* 新增：提示框显示按钮（隐藏时显示） */
+        #tips-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #9C27B0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            z-index: 101;
+            display: none; /* 默认隐藏 */
+            transition: all 0.2s ease;
+        }
+        #tips-toggle:hover {
+            background: #7B1FA2;
+            transform: scale(1.1);
+        }
+        #tips strong {
+            color: #4CAF50;
+        }
+        #tips .key {
+            display: inline-block;
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 0 2px;
+            font-family: monospace;
+        }
+        
+        /* 环境状态提示 - 新增过渡动画 */
+        #env-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            border: 1px solid #ff9800;
+            /* 新增：过渡动画 */
+            transition: all 0.3s ease;
+            z-index: 99;
+        }
+        /* 新增：环境状态隐藏状态 */
+        #env-status.hidden {
+            top: -50px; /* 向上滑出视野 */
+        }
+        /* 新增：环境状态显示按钮 */
+        #status-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            z-index: 101;
+            display: none; /* 默认隐藏 */
+            transition: all 0.2s ease;
+        }
+        #status-toggle:hover {
+            background: #e68900;
+            transform: scale(1.1);
+        }
+        
+        /* 互动提示（增强视觉效果） */
+        #interact-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 18px;
+            display: none;
+            z-index: 200;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+            text-align: center;
+        }
+        
+        /* 互动标记（显示可交互物体） */
+        .interact-marker {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+            display: none;
+            z-index: 150;
+            pointer-events: none;
+        }
+        .interact-marker::after {
+            content: '🖱️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+        }
+        
+        /* 小鸟状态HUD - 新增过渡动画 */
+        #bird-hud {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            border: 1px solid #4CAF50;
+            /* 新增：过渡动画 */
+            transition: all 0.3s ease;
+            z-index: 99;
+        }
+        /* 新增：小鸟HUD隐藏状态 */
+        #bird-hud.hidden {
+            bottom: -50px; /* 向下滑出视野 */
+        }
+        /* 新增：小鸟HUD显示按钮 */
+        #hud-toggle {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            z-index: 101;
+            display: none; /* 默认隐藏 */
+            transition: all 0.2s ease;
+        }
+        #hud-toggle:hover {
+            background: #45a049;
+            transform: scale(1.1);
+        }
+        #bird-hud .energy-bar {
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        #bird-hud .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        /* 全局隐藏/显示控制按钮 */
+        #global-toggle {
+            position: fixed;
+            top: 10px;
+            left: 240px;
+            background: #607D8B;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            z-index: 102;
+            transition: all 0.2s ease;
+        }
+        #global-toggle:hover {
+            background: #455A64;
+        }
+    </style>
+</head>
+<body>
+<div id="panel">
+    <h3>鸟类栖息环境仿真</h3>
+    <div>🌍 环境切换</div>
+    <button class="env-btn" onclick="changeEnvironment('forest')">森林环境</button>
+    <button class="env-btn" onclick="changeEnvironment('lake')">湖泊环境</button>
+    <button class="env-btn" onclick="changeEnvironment('grassland')">草原环境</button>
+    <button class="env-btn" onclick="changeEnvironment('snow')">雪山环境</button>
+    <hr style="margin: 10px 0; border: 0; border-top: 1px solid #555;">
+    <div>🐦 小鸟控制</div>
+    <button class="bird-btn" onclick="changeBirdType('sparrow')">麻雀</button>
+    <button class="bird-btn" onclick="changeBirdType('eagle')">老鹰</button>
+    <button class="bird-btn" onclick="changeBirdType('duck')">鸭子</button>
+    <button onclick="addBird()">新增小鸟</button>
+    <button onclick="togglePause()">暂停/继续</button>
+    <span>飞行速度：</span>
+    <input type="range" id="speed" min="0.01" max="0.2" step="0.01" value="0.08">
+    <span>环境特效：</span>
+    <input type="range" id="effect" min="0" max="1" step="0.1" value="0.5" oninput="updateEnvironmentEffect(this.value)">
+    <!-- 新增：控制面板隐藏/显示按钮 -->
+    <button class="toggle-btn" onclick="togglePanel()">隐藏控制面板 [H]</button>
+</div>
+
+<!-- 新增：环境状态显示按钮 -->
+<button id="status-toggle" onclick="toggleStatus()">📊</button>
+<div id="env-status">当前环境：森林 | 当前鸟类：麻雀</div>
+
+<div id="interact-hint">点击水面可以喝水 💧</div>
+<div class="interact-marker" id="interact-marker"></div>
+
+<!-- 新增：小鸟HUD显示按钮 -->
+<button id="hud-toggle" onclick="toggleHud()">❤️</button>
+<div id="bird-hud">
+    小鸟状态：正常 | 能量：
+    <div class="energy-bar">
+        <div class="energy-fill" id="energy-fill"></div>
+    </div>
+</div>
+
+<!-- 新增：提示框显示按钮 -->
+<button id="tips-toggle" onclick="toggleTips()">💡</button>
+<div id="tips">
+    <strong>🎮 核心操作：</strong><br>
+    <span class="key">W</span>前 <span class="key">S</span>后 <span class="key">A</span>左 <span class="key">D</span>右 | 
+    <span class="key">Q</span>上升 <span class="key">E</span>下降<br>
+    <strong>👀 视角控制：</strong><br>
+    鼠标移动：360°自由视角（CF风格） | 
+    <span class="key">滚轮</span>：缩放 | 
+    <span class="key">空格</span>：重置视角<br>
+    <strong>✨ 环境互动：</strong><br>
+    森林：靠近树枝 <span class="key">鼠标左键</span> 停歇 🪵<br>
+    湖泊：点击水面 <span class="key">鼠标左键</span> 喝水 💧（恢复能量）<br>
+    草原：<span class="key">空格</span> 加速飞行 ⚡ | 雪山：<span class="key">Shift</span> 滑翔 🧊<br>
+    <!-- 新增：提示框隐藏按钮 -->
+    <button style="width: auto; padding: 2px 8px; margin-top: 8px; background: #9C27B0; border: none; border-radius: 3px; cursor: pointer;" onclick="toggleTips()">隐藏提示 [J]</button>
+</div>
+
+<!-- 新增：全局隐藏/显示按钮 -->
+<button id="global-toggle" onclick="toggleAllUI()">显示/隐藏所有UI [ESC]</button>
+
+<!-- 引入Three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.min.js"></script>
+
+<script>
+    // 全局变量
+    let scene, camera, renderer;
+    let birds = []; // 存储所有小鸟
+    let envObjects = []; // 环境物体（树木、岩石、花草等）
+    let interactiveObjects = []; // 可互动物体
+    let isPause = false; // 暂停状态
+    let flySpeed = 0.08;
+    let envEffect = 0.5; // 环境特效强度
+    let currentEnv = 'forest'; // 当前环境
+    let currentBirdType = 'sparrow'; // 当前小鸟类型
+    let cameraPitch = 0, cameraYaw = 0; // CF风格视角变量
+    let birdEnergy = 100; // 小鸟能量值（互动反馈）
+    const keys = {}; // 存储按键状态
+    const interactMarker = document.getElementById('interact-marker');
+    
+    // 新增：记录各UI元素显示状态
+    let panelVisible = true;
+    let tipsVisible = true;
+    let statusVisible = true;
+    let hudVisible = true;
+    let allUIVisible = true;
+
+    // 环境配置
+    const envConfigs = {
+        forest: {
+            sky: 0x87ceeb,
+            fog: [0x87ceeb, 10, 100],
+            ground: 0x3e7d18,
+            ambientLight: 0.6,
+            dirLight: 0.7,
+            effects: ['wind', 'leaves']
+        },
+        lake: {
+            sky: 0x4a90e2,
+            fog: [0x4a90e2, 15, 120],
+            ground: 0x2d5a7f,
+            ambientLight: 0.7,
+            dirLight: 0.8,
+            effects: ['waterWave', 'mist']
+        },
+        grassland: {
+            sky: 0x7ec0ee,
+            fog: [0x7ec0ee, 20, 150],
+            ground: 0x6da329,
+            ambientLight: 0.8,
+            dirLight: 0.9,
+            effects: ['grass', 'wind']
+        },
+        snow: {
+            sky: 0xcfe0f1,
+            fog: [0xcfe0f1, 5, 80],
+            ground: 0xf5f8ff,
+            ambientLight: 0.5,
+            dirLight: 0.6,
+            effects: ['snow', 'wind']
+        }
+    };
+
+    // 小鸟类型配置
+    const birdConfigs = {
+        sparrow: { size: 1, speed: 1.0, wingSpeed: 8, color: () => new THREE.Color().setHSL(Math.random(), 0.8, 0.5), energyConsume: 0.05 },
+        eagle: { size: 1.8, speed: 1.5, wingSpeed: 5, color: () => new THREE.Color(0x8b7355), energyConsume: 0.08 },
+        duck: { size: 1.2, speed: 0.8, wingSpeed: 6, color: () => new THREE.Color().setHSL(0.6 + Math.random()*0.1, 0.7, 0.4), energyConsume: 0.04 }
+    };
+
+    // 初始化核心场景
+    function init() {
+        // 1. 场景
+        scene = new THREE.Scene();
+        updateEnvironment('forest');
+
+        // 2. 相机（CF风格第一人称视角）
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 8, 20);
+        camera.rotation.order = 'YXZ'; // 先绕Y轴旋转，再绕X轴旋转（CF风格）
+
+        // 3. 渲染器
+        renderer = new THREE.WebGLRenderer({antialias:true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 柔和阴影
+        document.body.appendChild(renderer.domElement);
+
+        // 4. 隐藏鼠标并锁定（CF风格）
+        document.body.requestPointerLock = document.body.requestPointerLock ||
+                                           document.body.mozRequestPointerLock;
+        document.body.addEventListener('click', () => {
+            document.body.requestPointerLock();
+        });
+
+        // 5. 绑定交互
+        bindControls();
+
+        // 6. 初始小鸟
+        addBird();
+
+        // 7. 启动动画
+        animate();
+    }
+
+    // 切换环境
+    function changeEnvironment(envType) {
+        currentEnv = envType;
+        document.getElementById('env-status').textContent = `当前环境：${getEnvName(envType)} | 当前鸟类：${getBirdName(currentBirdType)}`;
+        
+        // 清除旧环境物体
+        envObjects.forEach(obj => scene.remove(obj));
+        envObjects = [];
+        interactiveObjects = [];
+
+        // 更新场景基础配置
+        updateEnvironment(envType);
+        
+        // 根据环境类型创建专属物体
+        const config = envConfigs[envType];
+        switch(envType) {
+            case 'forest':
+                createForestEnvironment();
+                break;
+            case 'lake':
+                createLakeEnvironment();
+                break;
+            case 'grassland':
+                createGrasslandEnvironment();
+                break;
+            case 'snow':
+                createSnowEnvironment();
+                break;
+        }
+
+        // 重置小鸟位置
+        birds.forEach(bird => {
+            bird.position.set(
+                (Math.random()-0.5)*20,
+                Math.random()*5 + 5,
+                (Math.random()-0.5)*20
+            );
+        });
+        
+        // 重置能量
+        updateEnergy(100);
+        showInteractHint(`进入${getEnvName(envType)}环境 🌳`);
+    }
+
+    // 更新环境基础配置
+    function updateEnvironment(envType) {
+        const config = envConfigs[envType];
+        scene.background = new THREE.Color(config.sky);
+        scene.fog = new THREE.Fog(config.sky, config.fog[1], config.fog[2]);
+
+        // 更新灯光
+        scene.children.forEach(child => {
+            if(child.isAmbientLight) child.intensity = config.ambientLight;
+            if(child.isDirectionalLight) child.intensity = config.dirLight;
+        });
+
+        // 创建/更新地面
+        let ground = scene.children.find(child => child.name === 'ground');
+        if(!ground) {
+            ground = new THREE.Mesh(
+                new THREE.CircleGeometry(100, 64),
+                new THREE.MeshLambertMaterial({color: config.ground})
+            );
+            ground.name = 'ground';
+            ground.rotation.x = -Math.PI/2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            envObjects.push(ground);
+        } else {
+            ground.material.color = new THREE.Color(config.ground);
+        }
+
+        // 创建/更新灯光
+        if(!scene.children.find(child => child.isAmbientLight)) {
+            scene.add(new THREE.AmbientLight(0xffffff, config.ambientLight));
+        }
+        let dirLight = scene.children.find(child => child.isDirectionalLight);
+        if(!dirLight) {
+            dirLight = new THREE.DirectionalLight(0xffffff, config.dirLight);
+            dirLight.position.set(30, 40, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+        } else {
+            dirLight.intensity = config.dirLight;
+        }
+    }
+
+    // 创建森林环境
+    function createForestEnvironment() {
+        // 生成树木（30棵）
+        for(let i=0; i<30; i++) {
+            let x = (Math.random()-0.5)*150;
+            let z = (Math.random()-0.5)*150;
+            const treeHeight = 5 + Math.random() * 8;
+            const crownSize = 2 + Math.random() * 3;
+            
+            // 树干
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.4 + Math.random()*0.5, 0.6 + Math.random()*0.5, treeHeight),
+                new THREE.MeshLambertMaterial({color:0x8b4513})
+            );
+            trunk.position.set(x, treeHeight/2, z);
+            trunk.castShadow = true;
+            scene.add(trunk);
+            envObjects.push(trunk);
+
+            // 树冠（多层）
+            const crownLayers = 2 + Math.floor(Math.random() * 2);
+            for(let j=0; j<crownLayers; j++) {
+                const crown = new THREE.Mesh(
+                    new THREE.SphereGeometry(crownSize - j*0.8),
+                    new THREE.MeshLambertMaterial({color: new THREE.Color().setHSL(0.3, 0.8, 0.2 + Math.random() * 0.1)})
+                );
+                crown.position.set(x, treeHeight + (j+1)*2, z);
+                crown.castShadow = true;
+                scene.add(crown);
+                envObjects.push(crown);
+            }
+
+            // 可停歇的树枝（互动元素）
+            if(i % 5 === 0) {
+                const branch = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.1, 0.1, 3),
+                    new THREE.MeshLambertMaterial({color:0x6d4c41})
+                );
+                branch.position.set(x + 2, treeHeight + 3, z);
+                branch.rotation.z = Math.PI/4;
+                branch.name = 'branch';
+                branch.userData = { 
+                    type: 'rest', 
+                    position: new THREE.Vector3(x + 2, treeHeight + 3, z),
+                    interactRadius: 8,
+                    interactText: '点击树枝停歇 🪵'
+                };
+                scene.add(branch);
+                envObjects.push(branch);
+                interactiveObjects.push(branch);
+            }
+        }
+
+        // 生成灌木丛
+        for(let i=0; i<20; i++) {
+            let x = (Math.random()-0.5)*150;
+            let z = (Math.random()-0.5)*150;
+            const bush = new THREE.Mesh(
+                new THREE.SphereGeometry(1.5 + Math.random()),
+                new THREE.MeshLambertMaterial({color:0x2e7d32})
+            );
+            bush.position.set(x, 1, z);
+            scene.add(bush);
+            envObjects.push(bush);
+        }
+    }
+
+    // 创建湖泊环境
+    function createLakeEnvironment() {
+        // 主湖泊
+        const lakeSize = 20 + Math.random() * 10;
+        const lake = new THREE.Mesh(
+            new THREE.CircleGeometry(lakeSize, 64),
+            new THREE.MeshPhongMaterial({
+                color: 0x1976d2, 
+                transparent:true, 
+                opacity: 0.7 + envEffect * 0.2
+            })
+        );
+        lake.name = 'water';
+        lake.rotation.x = -Math.PI/2;
+        lake.position.set(0, 0.1, 0);
+        lake.userData = { 
+            type: 'water', 
+            drinkable: true,
+            interactRadius: 10,
+            interactText: '点击水面喝水 💧'
+        };
+        scene.add(lake);
+        envObjects.push(lake);
+        interactiveObjects.push(lake);
+
+        // 湖边石头
+        for(let i=0; i<15; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let distance = lakeSize + 1 + Math.random() * 3;
+            let x = Math.cos(angle) * distance;
+            let z = Math.sin(angle) * distance;
+            
+            const rock = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5 + Math.random()),
+                new THREE.MeshLambertMaterial({color:0x757575})
+            );
+            rock.position.set(x, 0.5, z);
+            scene.add(rock);
+            envObjects.push(rock);
+        }
+
+        // 水生植物
+        for(let i=0; i<25; i++) {
+            let angle = Math.random() * Math.PI * 2;
+            let distance = Math.random() * lakeSize * 0.8;
+            let x = Math.cos(angle) * distance;
+            let z = Math.sin(angle) * distance;
+            
+            const plant = new THREE.Group();
+            const stem = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.05, 0.05, 1 + Math.random()),
+                new THREE.MeshLambertMaterial({color:0x2e7d32})
+            );
+            stem.position.y = 0.5;
+            const leaf = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3 + Math.random()*0.2),
+                new THREE.MeshLambertMaterial({color:0x1b5e20})
+            );
+            leaf.position.y = 1 + Math.random();
+            
+            plant.add(stem, leaf);
+            plant.position.set(x, 0.1, z);
+            scene.add(plant);
+            envObjects.push(plant);
+        }
+    }
+
+    // 创建草原环境
+    function createGrasslandEnvironment() {
+        // 生成草丛（大量）
+        for(let i=0; i<100; i++) {
+            let x = (Math.random()-0.5)*200;
+            let z = (Math.random()-0.5)*200;
+            
+            const grass = new THREE.Group();
+            // 多根草叶
+            for(let j=0; j<5; j++) {
+                const blade = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.1, 0.8 + Math.random(), 0.1),
+                    new THREE.MeshLambertMaterial({color: new THREE.Color().setHSL(0.3, 0.8, 0.3 + Math.random()*0.1)})
+                );
+                blade.position.set(
+                    (Math.random()-0.5)*0.3,
+                    0.4 + Math.random()*0.2,
+                    (Math.random()-0.5)*0.3
+                );
+                blade.rotation.z = (Math.random()-0.5)*0.5;
+                grass.add(blade);
+            }
+            grass.position.set(x, 0, z);
+            grass.userData = { sway: Math.random() * Math.PI, swaySpeed: 0.01 + Math.random()*0.01 };
+            scene.add(grass);
+            envObjects.push(grass);
+        }
+
+        // 零星树木
+        for(let i=0; i<8; i++) {
+            let x = (Math.random()-0.5)*200;
+            let z = (Math.random()-0.5)*200;
+            const treeHeight = 8 + Math.random() * 4;
+            
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.6, 0.8, treeHeight),
+                new THREE.MeshLambertMaterial({color:0x8b4513})
+            );
+            trunk.position.set(x, treeHeight/2, z);
+            scene.add(trunk);
+            envObjects.push(trunk);
+
+            const crown = new THREE.Mesh(
+                new THREE.SphereGeometry(4 + Math.random()*2),
+                new THREE.MeshLambertMaterial({color:0x2e7d32})
+            );
+            crown.position.set(x, treeHeight + 3, z);
+            scene.add(crown);
+            envObjects.push(crown);
+        }
+
+        // 小水洼（互动元素）
+        const puddle = new THREE.Mesh(
+            new THREE.CircleGeometry(3, 32),
+            new THREE.MeshPhongMaterial({color:0x1976d2, transparent:true, opacity:0.6})
+        );
+        puddle.rotation.x = -Math.PI/2;
+        puddle.position.set(30, 0.05, -20);
+        puddle.name = 'puddle';
+        puddle.userData = { 
+            type: 'water', 
+            drinkable: true,
+            interactRadius: 8,
+            interactText: '点击水洼喝水 💧'
+        };
+        scene.add(puddle);
+        envObjects.push(puddle);
+        interactiveObjects.push(puddle);
+    }
+
+    // 创建雪山环境
+    function createSnowEnvironment() {
+        // 地面覆盖雪
+        const snowGround = scene.children.find(child => child.name === 'ground');
+        snowGround.material = new THREE.MeshLambertMaterial({
+            color: 0xf5f8ff,
+            transparent: true,
+            opacity: 0.9 + envEffect * 0.1
+        });
+
+        // 雪山（多个）
+        for(let i=0; i<5; i++) {
+            let x = (Math.random()-0.5)*100;
+            let z = (Math.random()-0.5)*100;
+            const mountainHeight = 20 + Math.random() * 15;
+            
+            const mountain = new THREE.Mesh(
+                new THREE.ConeGeometry(15 + Math.random()*10, mountainHeight, 16),
+                new THREE.MeshLambertMaterial({color: 0xf8fbff})
+            );
+            mountain.position.set(x, mountainHeight/2, z);
+            mountain.castShadow = true;
+            scene.add(mountain);
+            envObjects.push(mountain);
+        }
+
+        // 岩石
+        for(let i=0; i<20; i++) {
+            let x = (Math.random()-0.5)*150;
+            let z = (Math.random()-0.5)*150;
+            const rock = new THREE.Mesh(
+                new THREE.SphereGeometry(0.8 + Math.random()*1.2),
+                new THREE.MeshLambertMaterial({color:0x9e9e9e})
+            );
+            rock.position.set(x, 1, z);
+            scene.add(rock);
+            envObjects.push(rock);
+        }
+
+        // 积雪堆
+        for(let i=0; i<30; i++) {
+            let x = (Math.random()-0.5)*150;
+            let z = (Math.random()-0.5)*150;
+            const snowPile = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5 + Math.random()),
+                new THREE.MeshLambertMaterial({color:0xffffff})
+            );
+            snowPile.position.set(x, 0.5, z);
+            scene.add(snowPile);
+            envObjects.push(snowPile);
+        }
+    }
+
+    // 切换小鸟类型
+    function changeBirdType(birdType) {
+        currentBirdType = birdType;
+        
+        // 更新现有小鸟
+        birds.forEach((bird, index) => {
+            if(index === 0) {
+                scene.remove(bird);
+                birds.splice(index, 1);
+            }
+        });
+        addBird();
+        
+        // 更新状态提示
+        document.getElementById('env-status').textContent = `当前环境：${getEnvName(currentEnv)} | 当前鸟类：${getBirdName(birdType)}`;
+        showInteractHint(`切换为${getBirdName(birdType)} 🐦`);
+        
+        // 更新提示框内容并保留隐藏按钮
+        document.getElementById('tips').innerHTML = `
+            <strong>🎮 核心操作：</strong><br>
+            <span class="key">W</span>前 <span class="key">S</span>后 <span class="key">A</span>左 <span class="key">D</span>右 | 
+            <span class="key">Q</span>上升 <span class="key">E</span>下降<br>
+            <strong>👀 视角控制：</strong><br>
+            鼠标移动：360°自由视角（CF风格） | 
+            <span class="key">滚轮</span>：缩放 | 
+            <span class="key">空格</span>：重置视角<br>
+            <strong>✨ 环境互动：</strong><br>
+            森林：靠近树枝 <span class="key">鼠标左键</span> 停歇 🪵<br>
+            湖泊：点击水面 <span class="key">鼠标左键</span> 喝水 💧（恢复能量）<br>
+            草原：<span class="key">空格</span> 加速飞行 ⚡ | 雪山：<span class="key">Shift</span> 滑翔 🧊<br>
+            <button style="width: auto; padding: 2px 8px; margin-top: 8px; background: #9C27B0; border: none; border-radius: 3px; cursor: pointer;" onclick="toggleTips()">隐藏提示 [J]</button>
+        `;
+    }
+
+    // 创建小鸟（支持不同类型）
+    function addBird() {
+        const birdConfig = birdConfigs[currentBirdType];
+        const bird = new THREE.Group();
+        const scale = birdConfig.size;
+        
+        // 鸟身
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(1*scale, 0.8*scale, 2*scale),
+            new THREE.MeshLambertMaterial({color: birdConfig.color()})
+        );
+        body.castShadow = true;
+        
+        // 翅膀（根据类型调整）
+        const wingSize = currentBirdType === 'eagle' ? 5*scale : 3*scale;
+        const wingL = new THREE.Mesh(
+            new THREE.BoxGeometry(wingSize, 0.2*scale, 1.5*scale),
+            body.material.clone()
+        );
+        wingL.position.set(-2*scale, 0, 0);
+        const wingR = wingL.clone();
+        wingR.position.x = 2*scale;
+
+        // 头部
+        const headSize = currentBirdType === 'eagle' ? 0.8*scale : 0.5*scale;
+        const head = new THREE.Mesh(
+            new THREE.SphereGeometry(headSize),
+            body.material.clone()
+        );
+        head.position.set(0, 0, 1*scale);
+
+        // 特殊特征
+        if(currentBirdType === 'eagle') {
+            const beak = new THREE.Mesh(
+                new THREE.ConeGeometry(0.2*scale, 0.8*scale, 8),
+                new THREE.MeshLambertMaterial({color:0xff8f00})
+            );
+            beak.position.set(0, 0, 1.5*scale);
+            beak.rotation.x = Math.PI/2;
+            bird.add(beak);
+        }
+        if(currentBirdType === 'duck') {
+            const beak = new THREE.Mesh(
+                new THREE.BoxGeometry(0.4*scale, 0.2*scale, 0.6*scale),
+                new THREE.MeshLambertMaterial({color:0xffa000})
+            );
+            beak.position.set(0, -0.1*scale, 1.2*scale);
+            bird.add(beak);
+        }
+
+        bird.add(body, wingL, wingR, head);
+        // 随机初始位置
+        bird.position.set(
+            (Math.random()-0.5)*20,
+            Math.random()*5 + 5,
+            (Math.random()-0.5)*20
+        );
+        // 小鸟专属参数
+        bird.userData = {
+            wingAngle: 0,
+            speed: flySpeed * birdConfig.speed,
+            wingSpeed: birdConfig.wingSpeed,
+            type: currentBirdType,
+            isResting: false,
+            restTimer: 0,
+            velocity: new THREE.Vector3(0, 0, 0),
+            energyConsume: birdConfig.energyConsume
+        };
+
+        scene.add(bird);
+        birds.push(bird);
+    }
+
+    // 检查互动（增强版）
+    function checkInteractions() {
+        const mainBird = birds[0];
+        if(!mainBird || !interactiveObjects.length) {
+            interactMarker.style.display = 'none';
+            return;
+        }
+
+        let closestInteractObj = null;
+        let closestDistance = Infinity;
+        let interactText = '';
+
+        // 检查与所有互动物体的距离
+        interactiveObjects.forEach(obj => {
+            const distance = mainBird.position.distanceTo(obj.position);
+            
+            // 找到最近的可互动物体
+            if(distance < obj.userData.interactRadius && distance < closestDistance) {
+                closestDistance = distance;
+                closestInteractObj = obj;
+                interactText = obj.userData.interactText;
+            }
+        });
+
+        // 显示互动标记
+        if(closestInteractObj) {
+            // 将3D坐标转换为屏幕坐标
+            const vector = new THREE.Vector3().copy(closestInteractObj.position);
+            vector.project(camera);
+            
+            // 转换为DOM坐标
+            const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
+            
+            // 更新标记位置
+            interactMarker.style.left = `${x - 20}px`;
+            interactMarker.style.top = `${y - 20}px`;
+            interactMarker.style.display = 'block';
+            
+            // 显示互动提示
+            showInteractHint(interactText, 1000);
+            
+            // 森林：树枝停歇（主动点击）
+            if(closestInteractObj.userData.type === 'rest' && keys['MouseLeft']) {
+                mainBird.userData.isResting = true;
+                mainBird.userData.restTimer = 300; // 停歇5秒
+                mainBird.position.lerp(closestInteractObj.userData.position, 0.05);
+                mainBird.userData.velocity.set(0, 0, 0);
+                showInteractHint('正在树枝上休息 🪵 恢复能量', 3000);
+                updateEnergy(birdEnergy + 20); // 休息恢复能量
+                keys['MouseLeft'] = false; // 重置鼠标按键
+            }
+            
+            // 湖泊：喝水（主动点击）
+            if(closestInteractObj.userData.type === 'water' && keys['MouseLeft']) {
+                showInteractHint('正在喝水 💧 能量+30', 3000);
+                updateEnergy(birdEnergy + 30); // 喝水恢复能量
+                keys['MouseLeft'] = false; // 重置鼠标按键
+            }
+        } else {
+            interactMarker.style.display = 'none';
+        }
+
+        // 恢复飞行
+        if(mainBird.userData.isResting) {
+            mainBird.userData.restTimer--;
+            if(mainBird.userData.restTimer <= 0) {
+                mainBird.userData.isResting = false;
+                showInteractHint('休息完毕，继续飞行 🐦', 2000);
+            }
+        }
+
+        // 能量消耗
+        if(!mainBird.userData.isResting && (keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD'])) {
+            updateEnergy(birdEnergy - mainBird.userData.energyConsume);
+        }
+
+        // 能量过低提示
+        if(birdEnergy < 20 && !mainBird.userData.isResting) {
+            showInteractHint('能量不足！寻找水源或树枝休息 ⚠️', 1000);
+        }
+    }
+
+    // 更新能量值
+    function updateEnergy(value) {
+        birdEnergy = Math.max(0, Math.min(100, value));
+        document.getElementById('energy-fill').style.width = `${birdEnergy}%`;
+        
+        // 更新状态文本
+        let statusText = '正常';
+        if(birdEnergy < 20) statusText = '疲惫';
+        else if(birdEnergy > 80) statusText = '充沛';
+        
+        document.getElementById('bird-hud').innerHTML = `
+            小鸟状态：${statusText} | 能量：
+            <div class="energy-bar">
+                <div class="energy-fill" id="energy-fill" style="width: ${birdEnergy}%;"></div>
+            </div>
+        `;
+    }
+
+    // 显示互动提示（增强版）
+    function showInteractHint(text, duration = 2000) {
+        const hint = document.getElementById('interact-hint');
+        hint.textContent = text;
+        hint.style.display = 'block';
+        
+        // 根据内容改变边框颜色
+        if(text.includes('⚠️')) {
+            hint.style.borderColor = '#f44336';
+            hint.style.boxShadow = '0 0 15px rgba(244, 67, 54, 0.8)';
+        } else if(text.includes('💧') || text.includes('🪵')) {
+            hint.style.borderColor = '#4CAF50';
+            hint.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.8)';
+        } else if(text.includes('🐦')) {
+            hint.style.borderColor = '#ff9800';
+            hint.style.boxShadow = '0 0 15px rgba(255, 152, 0, 0.8)';
+        }
+        
+        clearTimeout(hint.timer);
+        hint.timer = setTimeout(() => {
+            hint.style.display = 'none';
+        }, duration);
+    }
+
+    // 更新环境特效
+    function updateEnvironmentEffect(value) {
+        envEffect = parseFloat(value);
+        
+        // 更新水面透明度
+        const waterObjects = scene.children.filter(child => child.name === 'water' || child.name === 'puddle');
+        waterObjects.forEach(obj => {
+            if(obj.material) obj.material.opacity = 0.6 + envEffect * 0.3;
+        });
+        
+        // 更新雪地面透明度
+        const snowGround = scene.children.find(child => child.name === 'ground' && currentEnv === 'snow');
+        if(snowGround) {
+            snowGround.material.opacity = 0.9 + envEffect * 0.1;
+        }
+    }
+
+    // 新增：控制面板隐藏/显示切换
+    function togglePanel() {
+        const panel = document.getElementById('panel');
+        panelVisible = !panelVisible;
+        
+        if(panelVisible) {
+            panel.classList.remove('hidden');
+            panel.querySelector('.toggle-btn').textContent = '隐藏控制面板 [H]';
+        } else {
+            panel.classList.add('hidden');
+            panel.querySelector('.toggle-btn').textContent = '显示控制面板 [H]';
+        }
+    }
+
+    // 新增：操作提示隐藏/显示切换
+    function toggleTips() {
+        const tips = document.getElementById('tips');
+        const tipsToggleBtn = document.getElementById('tips-toggle');
+        tipsVisible = !tipsVisible;
+        
+        if(tipsVisible) {
+            tips.classList.remove('hidden');
+            tipsToggleBtn.style.display = 'none';
+        } else {
+            tips.classList.add('hidden');
+            tipsToggleBtn.style.display = 'block';
+        }
+    }
+
+    // 新增：环境状态隐藏/显示切换
+    function toggleStatus() {
+        const status = document.getElementById('env-status');
+        const statusToggleBtn = document.getElementById('status-toggle');
+        statusVisible = !statusVisible;
+        
+        if(statusVisible) {
+            status.classList.remove('hidden');
+            statusToggleBtn.style.display = 'none';
+        } else {
+            status.classList.add('hidden');
+            statusToggleBtn.style.display = 'block';
+        }
+    }
+
+    // 新增：小鸟HUD隐藏/显示切换
+    function toggleHud() {
+        const hud = document.getElementById('bird-hud');
+        const hudToggleBtn = document.getElementById('hud-toggle');
+        hudVisible = !hudVisible;
+        
+        if(hudVisible) {
+            hud.classList.remove('hidden');
+            hudToggleBtn.style.display = 'none';
+        } else {
+            hud.classList.add('hidden');
+            hudToggleBtn.style.display = 'block';
+        }
+    }
+
+    // 新增：全局UI隐藏/显示切换
+    function toggleAllUI() {
+        allUIVisible = !allUIVisible;
+        
+        // 同步所有UI元素状态
+        panelVisible = allUIVisible;
+        tipsVisible = allUIVisible;
+        statusVisible = allUIVisible;
+        hudVisible = allUIVisible;
+        
+        // 更新控制面板
+        const panel = document.getElementById('panel');
+        if(allUIVisible) {
+            panel.classList.remove('hidden');
+            panel.querySelector('.toggle-btn').textContent = '隐藏控制面板 [H]';
+        } else {
+            panel.classList.add('hidden');
+            panel.querySelector('.toggle-btn').textContent = '显示控制面板 [H]';
+        }
+        
+        // 更新操作提示
+        const tips = document.getElementById('tips');
+        const tipsToggleBtn = document.getElementById('tips-toggle');
+        if(allUIVisible) {
+            tips.classList.remove('hidden');
+            tipsToggleBtn.style.display = 'none';
+        } else {
+            tips.classList.add('hidden');
+            tipsToggleBtn.style.display = 'block';
+        }
+        
+        // 更新环境状态
+        const status = document.getElementById('env-status');
+        const statusToggleBtn = document.getElementById('status-toggle');
+        if(allUIVisible) {
+            status.classList.remove('hidden');
+            statusToggleBtn.style.display = 'none';
+        } else {
+            status.classList.add('hidden');
+            statusToggleBtn.style.display = 'block';
+        }
+        
+        // 更新小鸟HUD
+        const hud = document.getElementById('bird-hud');
+        const hudToggleBtn = document.getElementById('hud-toggle');
+        if(allUIVisible) {
+            hud.classList.remove('hidden');
+            hudToggleBtn.style.display = 'none';
+        } else {
+            hud.classList.add('hidden');
+            hudToggleBtn.style.display = 'block';
+        }
+        
+        // 更新全局按钮文本
+        const globalBtn = document.getElementById('global-toggle');
+        globalBtn.textContent = allUIVisible ? '隐藏所有UI [ESC]' : '显示所有UI [ESC]';
+    }
+
+    // 绑定交互（CF风格视角 + 上下移动 + 新增快捷键）
+    function bindControls() {
+        // 记录按键状态
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            
+            // 新增：UI控制快捷键
+            if(e.code === 'KeyH') togglePanel(); // H键：控制面板
+            if(e.code === 'KeyJ') toggleTips();   // J键：操作提示
+            if(e.code === 'KeyK') toggleStatus(); // K键：环境状态
+            if(e.code === 'KeyL') toggleHud();    // L键：小鸟HUD
+            if(e.code === 'Escape') toggleAllUI();// ESC键：所有UI
+            
+            // 空格重置视角/草原加速
+            if(e.code === 'Space') {
+                cameraPitch = 0;
+                cameraYaw = 0;
+                
+                // 草原环境加速
+                if(currentEnv === 'grassland' && birds[0] && birdEnergy > 30) {
+                    birds[0].userData.speed = flySpeed * birdConfigs[currentBirdType].speed * 2.5;
+                    updateEnergy(birdEnergy - 10); // 加速消耗能量
+                    showInteractHint('加速飞行 ⚡ 消耗10点能量', 2000);
+                    setTimeout(() => {
+                        if(birds[0]) birds[0].userData.speed = flySpeed * birdConfigs[currentBirdType].speed;
+                    }, 1500);
+                }
+            }
+            
+            // Shift滑翔（雪山）
+            if(e.code === 'ShiftLeft' && currentEnv === 'snow' && birds[0]) {
+                birds[0].position.y += 0.1;
+                birds[0].userData.velocity.y = -0.02;
+                showInteractHint('滑翔模式 🧊', 1500);
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+            
+            // 恢复正常速度
+            if(e.code === 'Space' && birds[0]) {
+                birds[0].userData.speed = flySpeed * birdConfigs[currentBirdType].speed;
+            }
+        });
+
+        // CF风格鼠标视角控制（无拖拽，直接移动）
+        document.addEventListener('mousemove', (e) => {
+            if(document.pointerLockElement !== document.body) return;
+            
+            // 鼠标移动增量
+            const moveX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
+            const moveY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
+            
+            // 更新视角角度（CF风格）
+            cameraYaw -= moveX * 0.002; // 水平旋转（Y轴）
+            cameraPitch -= moveY * 0.002; // 垂直旋转（X轴）
+            
+            // 限制垂直视角（-89° 到 89°）
+            cameraPitch = Math.max(-Math.PI/2 + 0.01, Math.min(Math.PI/2 - 0.01, cameraPitch));
+        });
+
+        // 鼠标按键记录
+        document.addEventListener('mousedown', (e) => {
+            if(e.button === 0) keys['MouseLeft'] = true; // 左键
+        });
+        document.addEventListener('mouseup', (e) => {
+            if(e.button === 0) keys['MouseLeft'] = false; // 左键
+        });
+
+        // 滚轮缩放
+        document.addEventListener('wheel', (e) => {
+            const zoomSpeed = 0.1;
+            camera.fov = Math.max(40, Math.min(90, camera.fov + e.deltaY * 0.05));
+            camera.updateProjectionMatrix();
+        });
+
+        // 速度滑块
+        document.getElementById('speed').addEventListener('input', (e) => {
+            flySpeed = parseFloat(e.target.value);
+            birds.forEach(b => {
+                if(b.userData) b.userData.speed = flySpeed * birdConfigs[b.userData.type].speed;
+            });
+        });
+
+        // 窗口自适应
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    // 控制函数
+    function togglePause() {
+        isPause = !isPause;
+        showInteractHint(isPause ? '已暂停 ⏸️' : '继续飞行 ▶️');
+    }
+
+    // 辅助函数：获取环境名称
+    function getEnvName(envType) {
+        const names = { forest: '森林', lake: '湖泊', grassland: '草原', snow: '雪山' };
+        return names[envType] || '森林';
+    }
+
+    // 辅助函数：获取小鸟名称
+    function getBirdName(birdType) {
+        const names = { sparrow: '麻雀', eagle: '老鹰', duck: '鸭子' };
+        return names[birdType] || '小鸟';
+    }
+
+    // 核心动画循环（优化版）
+    function animate() {
+        requestAnimationFrame(animate);
+        if(isPause) return;
+
+        // 更新主小鸟
+        const mainBird = birds[0];
+        if(mainBird) {
+            // 应用CF风格视角到相机
+            camera.position.copy(mainBird.position);
+            camera.position.y += 2; // 相机略高于小鸟
+            
+            // 设置相机旋转（CF风格）
+            camera.rotation.y = cameraYaw;
+            camera.rotation.x = cameraPitch;
+
+            // 如果不在休息状态，处理小鸟移动
+            if(!mainBird.userData.isResting) {
+                // 重置速度向量
+                mainBird.userData.velocity.set(0, 0, 0);
+
+                // 基于相机视角的WSDA移动（第一人称）
+                const forward = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(0, cameraYaw, 0));
+                const right = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, cameraYaw, 0));
+                
+                // 前后左右移动
+                if(keys['KeyW']) mainBird.userData.velocity.add(forward.multiplyScalar(mainBird.userData.speed * 2));
+                if(keys['KeyS']) mainBird.userData.velocity.sub(forward.multiplyScalar(mainBird.userData.speed * 2));
+                if(keys['KeyA']) mainBird.userData.velocity.sub(right.multiplyScalar(mainBird.userData.speed * 2));
+                if(keys['KeyD']) mainBird.userData.velocity.add(right.multiplyScalar(mainBird.userData.speed * 2));
+                
+                // QE上下移动（新增核心功能）
+                if(keys['KeyQ']) mainBird.userData.velocity.y += mainBird.userData.speed * 2; // 上升
+                if(keys['KeyE']) mainBird.userData.velocity.y -= mainBird.userData.speed * 2; // 下降
+
+                // 应用移动
+                mainBird.position.add(mainBird.userData.velocity);
+
+                // 限制高度和范围
+                mainBird.position.y = Math.max(2, Math.min(50, mainBird.position.y));
+                mainBird.position.x = Math.max(-80, Math.min(80, mainBird.position.x));
+                mainBird.position.z = Math.max(-80, Math.min(80, mainBird.position.z));
+                
+                // 小鸟朝向移动方向
+                if(mainBird.userData.velocity.length() > 0.01) {
+                    mainBird.lookAt(
+                        mainBird.position.x + mainBird.userData.velocity.x,
+                        mainBird.position.y + mainBird.userData.velocity.y,
+                        mainBird.position.z + mainBird.userData.velocity.z
+                    );
+                }
+            }
+
+            // 翅膀扇动动画
+            const wingL = mainBird.children[1];
+            const wingR = mainBird.children[2];
+            mainBird.userData.wingAngle += 0.15;
+            
+            const wingFlapAmplitude = mainBird.userData.isResting ? 0.2 : 0.8;
+            wingL.rotation.z = Math.sin(mainBird.userData.wingAngle * mainBird.userData.wingSpeed) * wingFlapAmplitude;
+            wingR.rotation.z = -Math.sin(mainBird.userData.wingAngle * mainBird.userData.wingSpeed) * wingFlapAmplitude;
+        }
+
+        // 更新其他小鸟
+        birds.forEach((bird, index) => {
+            if(index === 0) return; // 跳过主控小鸟
+            
+            const data = bird.userData;
+            // 随机飞行
+            data.velocity.x = Math.cos(Date.now() * 0.001 * index) * data.speed;
+            data.velocity.z = Math.sin(Date.now() * 0.001 * index) * data.speed;
+            
+            // 随机上下浮动
+            data.velocity.y = Math.sin(Date.now() * 0.0005 * index) * data.speed * 0.5;
+            
+            // 应用移动
+            bird.position.add(data.velocity);
+            
+            // 限制范围
+            bird.position.y = Math.max(2, Math.min(30, bird.position.y));
+            bird.position.x = Math.max(-80, Math.min(80, bird.position.x));
+            bird.position.z = Math.max(-80, Math.min(80, bird.position.z));
+            
+            // 朝向飞行方向
+            bird.lookAt(
+                bird.position.x + data.velocity.x,
+                bird.position.y + data.velocity.y,
+                bird.position.z + data.velocity.z
+            );
+            
+            // 翅膀扇动
+            const wingL = bird.children[1];
+            const wingR = bird.children[2];
+            data.wingAngle += 0.15;
+            wingL.rotation.z = Math.sin(data.wingAngle * data.wingSpeed) * 0.8;
+            wingR.rotation.z = -Math.sin(data.wingAngle * data.wingSpeed) * 0.8;
+        });
+
+        // 更新环境动画
+        envObjects.forEach(obj => {
+            // 草丛摆动
+            if(obj.userData && obj.userData.sway) {
+                obj.userData.sway += obj.userData.swaySpeed * envEffect * 2;
+                obj.children.forEach((blade, index) => {
+                    blade.rotation.z = Math.sin(obj.userData.sway + index) * 0.2 * envEffect;
+                });
+            }
+            
+            // 水面波动
+            if(obj.name === 'water' || obj.name === 'puddle') {
+                obj.rotation.z = Math.sin(Date.now() * 0.001) * 0.01 * envEffect;
+            }
+        });
+
+        // 检查互动
+        checkInteractions();
+
+        // 渲染场景
+        renderer.render(scene, camera);
+    }
+
+    // 启动初始化
+    window.onload = init;
+</script>
+</body>
+</html>
