@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent"
+    android:gravity="center">
+
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:elevation="8dp"
+        android:layout_margin="16dp"
+        android:radius="16dp">
+
+        <TextView
+            android:id="@+id/tv_greeting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FF6B35"
+            android:gravity="center"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            android:lineSpacingExtra="4dp">
+            <![CDATA[
+本软件专为本店日常库存记账使用。
+
+开店辛苦，日常不要过度劳累，按时吃饭、
+<font color="#FF6B35"><b>多注意休息，保重身体</b></font>。
+
+记得简单备份数据，经营顺心，平安健康最重要。
+            ]]>
+        </TextView>
+
+        <Button
+            android:id="@+id/btn_iknow"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
+            android:text="我知道啦"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"
+            android:backgroundTint="#FF5722"
+            android:radius="24dp"/>
+
+    </LinearLayout>
+</LinearLayout>
