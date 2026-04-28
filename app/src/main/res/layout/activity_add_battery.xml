@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/etModel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="电池型号"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/etSpec"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="规格参数"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/etBatch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="批次号"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/etQuantity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="初始库存数量"
+        android:inputType="number" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/btnGenerate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="生成二维码" />
+
+        <Button
+            android:id="@+id/btnExport"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="导出二维码" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/ivQRCode"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"
+        android:background="#F5F5F5"
+        android:padding="8dp"
+        android:visibility="visible" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="保存电池信息" />
+
+</LinearLayout>

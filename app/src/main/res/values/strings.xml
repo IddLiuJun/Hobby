@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">电池库存管理</string>
+    <string name="inventory">库存</string>
+    <string name="scan">扫码</string>
+    <string name="statistics">统计</string>
+    <string name="add_battery">添加电池</string>
+    <string name="battery_model">电池型号</string>
+    <string name="specification">规格参数</string>
+    <string name="batch">批次号</string>
+    <string name="quantity">数量</string>
+    <string name="generate_qrcode">生成二维码</string>
+    <string name="export_qrcode">导出二维码</string>
+    <string name="save_battery">保存电池信息</string>
+    <string name="scan_in">扫码入库</string>
+    <string name="scan_out">扫码出库</string>
+    <string name="operation_records">操作记录</string>
+    <string name="total_in">累计入库</string>
+    <string name="total_out">累计出库</string>
+    <string name="today_in">今日入库</string>
+    <string name="today_out">今日出库</string>
+</resources>
