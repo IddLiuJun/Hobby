@@ -10,8 +10,8 @@ android {
         applicationId = "com.example.dianciguanli"
         minSdk = 21
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -49,6 +49,9 @@ dependencies {
     // Firebase数据库
     implementation("com.google.firebase:firebase-firestore:24.10.0")
     implementation("com.google.firebase:firebase-auth:22.3.1")
+
+    // Gson
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // 图片加载
     implementation("com.github.bumptech.glide:glide:4.16.0")

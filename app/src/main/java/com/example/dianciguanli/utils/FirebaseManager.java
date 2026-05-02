@@ -32,4 +32,8 @@ public class FirebaseManager {
     public void syncRecord(Record record) {
         if (!initialized) return;
     }
+
+    public void deleteBattery(String batteryId) {
+        if (!initialized) return;
+    }
 }

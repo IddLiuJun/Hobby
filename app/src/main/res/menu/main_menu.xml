@@ -8,4 +8,10 @@
         android:title="添加电池"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/action_backup"
+        android:icon="@drawable/ic_backup"
+        android:title="备份与恢复"
+        app:showAsAction="never" />
+
 </menu>

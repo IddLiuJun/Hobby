@@ -3,6 +3,8 @@ package com.example.dianciguanli.utils;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -48,5 +50,28 @@ public class QRCodeUtils {
         canvas.drawColor(Color.WHITE);
         canvas.drawBitmap(bitmap, borderSize, borderSize, null);
         return borderBitmap;
+    }
+
+    public static Bitmap addTextToQRCode(Bitmap qrBitmap, String text) {
+        int width = qrBitmap.getWidth();
+        int textHeight = 60;
+        int height = qrBitmap.getHeight() + textHeight;
+        
+        Bitmap result = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        Canvas canvas = new Canvas(result);
+        canvas.drawColor(Color.WHITE);
+        
+        canvas.drawBitmap(qrBitmap, 0, 0, null);
+        
+        Paint paint = new Paint();
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(32);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setAntiAlias(true);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        
+        canvas.drawText(text, width / 2, qrBitmap.getHeight() + 40, paint);
+        
+        return result;
     }
 }

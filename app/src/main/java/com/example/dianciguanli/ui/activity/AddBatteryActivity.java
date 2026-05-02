@@ -83,10 +83,13 @@ public class AddBatteryActivity extends AppCompatActivity {
 
         String batteryId = IDUtils.generateId();
         String qrContent = batteryId + "|" + model + "|" + spec + "|" + batch;
-        qrBitmap = QRCodeUtils.generateQRCode(qrContent, 400, 400);
+        Bitmap baseQrBitmap = QRCodeUtils.generateQRCode(qrContent, 400, 400);
 
-        if (qrBitmap != null) {
-            ivQRCode.setImageBitmap(qrBitmap);
+        if (baseQrBitmap != null) {
+            String shortId = batteryId.length() > 8 ? batteryId.substring(0, 8) : batteryId;
+            qrBitmap = QRCodeUtils.addTextToQRCode(baseQrBitmap, "编号: " + shortId);
+            Bitmap borderedBitmap = QRCodeUtils.addWhiteBorder(qrBitmap, 20);
+            ivQRCode.setImageBitmap(borderedBitmap);
             currentBattery = new Battery(model, spec, batch, 0, DateUtils.getCurrentDateTime(), DateUtils.getCurrentDateTime());
             currentBattery.setId(batteryId);
             Toast.makeText(this, "二维码生成成功", Toast.LENGTH_SHORT).show();
@@ -119,27 +122,26 @@ public class AddBatteryActivity extends AppCompatActivity {
         Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
         finish();
     }
-private void exportQRCode() {
-    if (qrBitmap == null) {
-        Toast.makeText(this, "请先生成二维码", Toast.LENGTH_SHORT).show();
-        return;
-    }
 
-    // 保存到 系统相册（相机位置）
-    String fileName = "电池二维码_" + currentBattery.getModel() + "_" + System.currentTimeMillis() + ".png";
-    
-    // 插入系统相册，所有手机都能立刻看到
-    boolean success = MediaStore.Images.Media.insertImage(
-        getContentResolver(),
-        qrBitmap,
-        fileName,
-        "电池型号：" + currentBattery.getModel()
-    ) != null;
+    private void exportQRCode() {
+        if (qrBitmap == null) {
+            Toast.makeText(this, "请先生成二维码", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-    if (success) {
-        Toast.makeText(this, "✅ 二维码已保存到【手机相册】", Toast.LENGTH_LONG).show();
-    } else {
-        Toast.makeText(this, "❌ 保存失败，请开启存储权限", Toast.LENGTH_SHORT).show();
+        String fileName = "电池二维码_" + currentBattery.getModel() + "_" + System.currentTimeMillis() + ".png";
+        
+        boolean success = MediaStore.Images.Media.insertImage(
+            getContentResolver(),
+            qrBitmap,
+            fileName,
+            "电池型号：" + currentBattery.getModel()
+        ) != null;
+
+        if (success) {
+            Toast.makeText(this, "二维码已保存到手机相册", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "保存失败，请开启存储权限", Toast.LENGTH_SHORT).show();
+        }
     }
-}
 }
